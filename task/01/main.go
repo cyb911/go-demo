@@ -10,10 +10,16 @@ func main() {
 	//fmt.Println(isPalindrome(-121))
 	//fmt.Println(isPalindrome(10))
 	//fmt.Println(isPalindrome(12321))
-	strs1 := []string{"flower", "flow", "flight"}
-	strs2 := []string{"com-dog", "com-racecar", "com-car"}
-	fmt.Println(longestCommonPrefix(strs1))
-	fmt.Println(longestCommonPrefix(strs2))
+	//strs1 := []string{"flower", "flow", "flight"}
+	//strs2 := []string{"com-dog", "com-racecar", "com-car"}
+	//fmt.Println(longestCommonPrefix(strs1))
+	//fmt.Println(longestCommonPrefix(strs2))
+
+	fmt.Println("两数之和:")
+	var nums = []int{3, 2, 4}
+	var result = twoSum(nums, 6)
+	fmt.Println(result)
+
 }
 
 /*
@@ -93,4 +99,35 @@ func commonPrefix(a, b string) string {
 		}
 	}
 	return a[:minLen]
+}
+
+/*
+两数之和
+*/
+func twoSum(nums []int, target int) []int {
+	var length = len(nums)
+	if length == 0 {
+		return nil
+	}
+
+	var tagMap = make(map[int]int)
+
+	for i := 0; i < length; i++ {
+		tagMap[nums[i]] = i // 数组元素作为key,下标作为value
+	}
+
+	for i := 0; i < length; i++ {
+		// 目标值减去数组中当前元素值，在tagMap hash表中找出对应的数组索引下标值
+		t1 := nums[i]
+		t2 := target - t1
+		index, ok := tagMap[t2]
+		if ok {
+			if index == i { // 当前数组下标不能与tagMap 中记录的下标值一致
+				continue
+			}
+			return []int{i, index}
+		}
+	}
+	return nil
+
 }
