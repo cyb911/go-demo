@@ -15,11 +15,34 @@ func main() {
 	//fmt.Println(longestCommonPrefix(strs1))
 	//fmt.Println(longestCommonPrefix(strs2))
 
-	fmt.Println("两数之和:")
-	var nums = []int{3, 2, 4}
-	var result = twoSum(nums, 6)
-	fmt.Println(result)
+	//fmt.Println("两数之和:")
+	//var nums = []int{3, 2, 4}
+	//var result = twoSum(nums, 6)
+	//fmt.Println(result)
 
+	nums := []int{1, 1, 2, 2, 3}
+	k := removeDuplicates(nums)
+	fmt.Println("唯一元素个数:", k)
+	fmt.Println("去重后数组:", nums[:k])
+
+}
+
+/*
+删除有序数组中的重复项
+*/
+func removeDuplicates(nums []int) int {
+	length := len(nums)
+	if length < 2 {
+		return length
+	}
+	i := 0
+	for j := 1; j < length; j++ { //比较相邻的数据是否相等，不相等说明是新的元素，复制到数组下标位置i + 1 位置
+		if nums[i] != nums[j] {
+			i++
+			nums[i] = nums[j]
+		}
+	}
+	return i + 1
 }
 
 /*
