@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"sort"
+)
 
 func main() {
 	//nums := []int{4, 2, 4, 3, 0, 0, 3, 9, 9}
@@ -29,8 +32,42 @@ func main() {
 	//fmt.Println(plusOne([]int{4, 3, 2, 1})) // [4 3 2 2]
 	//fmt.Println(plusOne([]int{9, 9, 9}))    // [1 0 0 0]
 
-	fmt.Println(isValid("([]){}"))
+	//fmt.Println(isValid("([]){}"))
 
+	fmt.Println(merge([][]int{{1, 3}, {2, 6}, {8, 10}, {15, 18}}))
+	fmt.Println(merge([][]int{{1, 4}, {4, 5}}))
+	fmt.Println(merge([][]int{{4, 7}, {1, 4}}))
+
+}
+
+/*
+合并区间
+*/
+func merge(intervals [][]int) [][]int {
+	if len(intervals) == 0 {
+		return nil
+	}
+
+	sort.Slice(intervals, func(i, j int) bool {
+		// 比较开始的值
+		return intervals[i][0] < intervals[j][0]
+	})
+
+	result := [][]int{intervals[0]}
+
+	for _, curr := range intervals[1:] {
+		last := result[len(result)-1]
+		if curr[0] <= last[1] { //每次都拿 result 里的“最后一个区间”与当前区间对比，判断是否重叠
+			if curr[1] > last[1] {
+				last[1] = curr[1]
+			}
+			result[len(result)-1] = last
+		} else {
+			result = append(result, curr)
+		}
+	}
+
+	return result
 }
 
 /*
