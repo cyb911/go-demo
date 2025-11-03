@@ -20,11 +20,78 @@ func main() {
 	//var result = twoSum(nums, 6)
 	//fmt.Println(result)
 
-	nums := []int{1, 1, 2, 2, 3}
-	k := removeDuplicates(nums)
-	fmt.Println("唯一元素个数:", k)
-	fmt.Println("去重后数组:", nums[:k])
+	//nums := []int{1, 1, 2, 2, 3}
+	//k := removeDuplicates(nums)
+	//fmt.Println("唯一元素个数:", k)
+	//fmt.Println("去重后数组:", nums[:k])
 
+	//fmt.Println(plusOne([]int{1, 2, 3}))    // [1 2 4]
+	//fmt.Println(plusOne([]int{4, 3, 2, 1})) // [4 3 2 2]
+	//fmt.Println(plusOne([]int{9, 9, 9}))    // [1 0 0 0]
+
+	fmt.Println(isValid("([]){}"))
+
+}
+
+/*
+有效的括号
+*/
+func isValid(s string) bool {
+	length := len(s)
+	if length%2 != 0 { // 奇数一定是无效的
+		return false
+	}
+
+	// 定义一个切片，用作栈的存储结构
+	stack := make([]byte, 0, length/2)
+
+	for i := 0; i < length; i++ {
+		t := s[i]
+		switch t {
+		case '(':
+			stack = append(stack, ')') // 左边符号入栈，入栈值为右符号，作为预期值
+		case '[':
+			stack = append(stack, ']')
+		case '{':
+			stack = append(stack, '}')
+		case ')', ']', '}': // 右边符号，取出栈数据对比是否一致。
+			sn := len(stack)
+			index := sn - 1
+			b := stack[index]
+			if sn == 0 || b != t {
+				return false
+			}
+			stack = stack[:index] // 出栈操作
+		default:
+			return false
+		}
+	}
+	return len(stack) == 0
+}
+
+/*
+加一
+*/
+func plusOne(digits []int) []int {
+	n := len(digits)
+
+	if n == 0 {
+		return digits
+	}
+
+	for i := n - 1; i >= 0; i-- {
+		if digits[i] < 9 {
+			digits[i]++
+			return digits
+		}
+		digits[i] = 0
+	}
+
+	// 处理9，99，999 情况。
+
+	result := make([]int, n+1)
+	result[0] = 1
+	return result
 }
 
 /*
