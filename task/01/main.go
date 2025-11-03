@@ -57,8 +57,7 @@ func isValid(s string) bool {
 		case ')', ']', '}': // 右边符号，取出栈数据对比是否一致。
 			sn := len(stack)
 			index := sn - 1
-			b := stack[index]
-			if sn == 0 || b != t {
+			if sn == 0 || stack[index] != t {
 				return false
 			}
 			stack = stack[:index] // 出栈操作
