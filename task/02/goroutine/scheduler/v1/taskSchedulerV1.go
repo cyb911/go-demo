@@ -63,14 +63,15 @@ func (s *Scheduler) Run(ctx context.Context) []Result {
 	})
 
 	// 任务统一由调度器内部推送
-loop:
-	for i := 0; i < len(s.tasks); i++ {
-		select {
-		case <-ctx.Done():
-			break loop
-		case s.taskChan <- i:
+	func() {
+		for i := range s.tasks {
+			select {
+			case <-ctx.Done():
+				return
+			case s.taskChan <- i:
+			}
 		}
-	}
+	}()
 
 	close(s.taskChan)
 	s.wg.Wait()
