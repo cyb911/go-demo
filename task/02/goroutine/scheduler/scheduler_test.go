@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"go-demo/task/02/goroutine/models"
 	taskscheduler "go-demo/task/02/goroutine/scheduler"
+	taskschedulerv1 "go-demo/task/02/goroutine/scheduler/v1"
 	"testing"
 	"time"
 )
@@ -43,6 +45,31 @@ func TestScheduler(t *testing.T) {
 	}
 
 	results := taskscheduler.BuildTasksScheduler(tasks, 2).Run(ctx)
+
+	fmt.Println("===== 执行结果 =====")
+	for _, result := range results {
+		// 结果可能因取消而有零值（未投递的任务 ID 会是默认 0）
+		// 用 StartedAt.IsZero 判断是否执行过
+		if result.StartedAt.IsZero() && result.EndedAt.IsZero() && result.Duration == 0 && result.Err == nil && result.Panic == nil {
+			continue
+		}
+		fmt.Printf("任务ID=%d | 开始=%s | 结束=%s | 耗时=%v | 错误=%v | Panic=%v\n",
+			result.ID, result.StartedAt.Format("15:04:05.000"), result.EndedAt.Format("15:04:05.000"), result.Duration, result.Err, result.Panic)
+	}
+}
+
+func TestSchedulerV1(t *testing.T) {
+	// 设置整体超时：所有任务最多 3 秒
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+
+	// 定义一组任务(函数)
+	tasks := []taskschedulerv1.Task{
+		&task.WorkTask{Message: "工作结束"},
+		&task.BackHomeTask{Message: "已经到家了"},
+	}
+
+	results := taskschedulerv1.BuildTasksScheduler(tasks, 2).Run(ctx)
 
 	fmt.Println("===== 执行结果 =====")
 	for _, result := range results {
