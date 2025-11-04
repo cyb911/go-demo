@@ -22,72 +22,84 @@ type Result struct {
 	Panic     any
 }
 
+// 调度器
+type Scheduler struct {
+	tasks    []Task
+	worker   int
+	taskChan chan int
+
+	results []Result
+	wg      sync.WaitGroup
+	once    sync.Once
+}
+
 /*
-执行任务
-ctx context ：上下文
+构建任务调度器
 tasks：任务列表
 worker:执行的协程数（并发度）
 */
-func RunTasks(ctx context.Context, tasks []Task, worker int) []Result {
-
-	count := len(tasks)
-	var taskWg sync.WaitGroup
-
-	// 启动 worker
-
-	// 默认至少有一个工作协程
+func BuildTasksScheduler(tasks []Task, worker int) *Scheduler {
 	if worker <= 0 {
 		worker = 1
 	}
-	//设置等待的协程的数量
-	taskWg.Add(worker)
-	// 定义任务通道
-	taskChan := make(chan int)
-
-	results := make([]Result, count)
-
-	for i := 0; i < worker; i++ {
-		go executeTask(ctx, &taskWg, taskChan, tasks, results)
+	return &Scheduler{
+		tasks:    tasks,
+		worker:   worker,
+		taskChan: make(chan int),
+		results:  make([]Result, len(tasks)),
 	}
-
-	// 向chan中投递信息，使用int值作为协作的信号量
-loop:
-	for i := 0; i < count; i++ {
-		select {
-		// 取消后，不在投递后续任务
-		case <-ctx.Done():
-			break loop
-		case taskChan <- i:
-		}
-	}
-	close(taskChan)
-	taskWg.Wait()
-	return results
 }
 
-func executeTask(ctx context.Context, wg *sync.WaitGroup, taskChan <-chan int, tasks []Task, results []Result) {
-	defer wg.Done()
+// 执行任务
+func (s *Scheduler) Run(ctx context.Context) []Result {
+	s.once.Do(func() {
+		for i := 0; i < s.worker; i++ {
+			s.wg.Add(1)
+			go s.workerLoop(ctx)
+		}
+	})
 
-	for idx := range taskChan {
-		start := time.Now()
-		result := Result{ID: idx, StartedAt: start}
+	// 任务统一由调度器内部推送
+loop:
+	for i := 0; i < len(s.tasks); i++ {
+		select {
+		case <-ctx.Done():
+			break loop
+		case s.taskChan <- i:
+		}
+	}
 
-		// 单个任务可继承上层 ctx（也可按需给每个任务单独设置超时）
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					result.Panic = r
-				}
-			}()
-			if tasks[idx] != nil {
-				result.Err = tasks[idx](ctx)
-			} else {
-				result.Err = errors.New("nil task")
+	close(s.taskChan)
+	s.wg.Wait()
+	return s.results
+}
+
+func (s *Scheduler) workerLoop(ctx context.Context) {
+	defer s.wg.Done()
+	for idx := range s.taskChan {
+		s.executeTask(ctx, idx)
+	}
+}
+
+func (s *Scheduler) executeTask(ctx context.Context, idx int) {
+	start := time.Now()
+	result := Result{ID: idx, StartedAt: start}
+
+	func() {
+		defer func() {
+			if r := recover(); r != nil {
+				result.Panic = r
 			}
 		}()
+		task := s.tasks[idx]
+		if task != nil {
+			result.Err = task(ctx)
+		} else {
+			result.Err = errors.New("nil task")
+		}
+	}()
 
-		result.EndedAt = time.Now()
-		result.Duration = result.EndedAt.Sub(start)
-		results[idx] = result
-	}
+	result.EndedAt = time.Now()
+	result.Duration = result.EndedAt.Sub(start)
+	s.results[idx] = result
 }

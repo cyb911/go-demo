@@ -42,8 +42,7 @@ func TestScheduler(t *testing.T) {
 		},
 	}
 
-	concurrency := 2
-	results := taskscheduler.RunTasks(ctx, tasks, concurrency)
+	results := taskscheduler.BuildTasksScheduler(tasks, 2).Run(ctx)
 
 	fmt.Println("===== 执行结果 =====")
 	for _, result := range results {
