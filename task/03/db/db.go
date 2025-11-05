@@ -92,3 +92,31 @@ func findEnvFile() string {
 	}
 	return ""
 }
+
+func GetDsn() string {
+	// 加载 .env 文件
+	envPath := findEnvFile()
+	if envPath != "" {
+		err := godotenv.Load(envPath)
+		if err == nil {
+			fmt.Println("加载 .env 文件成功:", envPath)
+		} else {
+			log.Printf("加载 .env 文件失败: %v", err)
+		}
+	} else {
+		log.Println("未找到 .env 文件，使用系统环境变量")
+	}
+
+	user := os.Getenv("DB_USER")
+	pass := os.Getenv("DB_PASS")
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	name := os.Getenv("DB_NAME")
+
+	if user == "" || pass == "" || host == "" || port == "" || name == "" {
+		log.Println("警告: 数据库环境变量不完整，可能导致连接失败")
+	}
+
+	return fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?charset=utf8mb4&parseTime=True&loc=Local",
+		user, pass, host, port, name)
+}
