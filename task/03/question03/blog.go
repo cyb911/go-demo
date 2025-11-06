@@ -1,5 +1,10 @@
 package question02
 
+import (
+	"go-demo/task/03/db"
+	"go-demo/task/03/question03/models"
+)
+
 /*
 题目1：模型定义
 假设你要开发一个博客系统，有以下几个实体： User （用户）、 Post （文章）、 Comment （评论）。
@@ -17,3 +22,27 @@ package question02
 为 Post 模型添加一个钩子函数，在文章创建时自动更新用户的文章数量统计字段。
 为 Comment 模型添加一个钩子函数，在评论删除时检查文章的评论数量，如果评论数量为 0，则更新文章的评论状态为 "无评论"。
 */
+
+// 查询某个用户发布的所有文章及其对应的评论信息
+func GetUserPostsWithComments(userID uint) (models.User, error) {
+	var u models.User
+	err := db.DB.Preload("Posts").Preload("Posts.Comments").First(&u, userID).Error
+	return u, err
+}
+
+// 查询评论数量最多的文章信息（返回 Post + 该帖评论数）
+func GetMostCommentedPost() (models.Post, error) {
+	var post models.Post
+
+	err := db.DB.Model(&models.Post{}).
+		Select("posts.*, COUNT(comments.id) AS comment_count").
+		Joins("LEFT JOIN comments ON comments.post_id = posts.id").
+		Group("posts.id").
+		Order("comment_count_ro DESC").
+		Limit(1).
+		Find(&post).Error
+	if err != nil {
+		return post, err
+	}
+	return post, nil
+}
